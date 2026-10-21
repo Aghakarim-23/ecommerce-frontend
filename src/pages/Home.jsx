@@ -2,6 +2,7 @@ import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
+import {useState, useEffect} from "react";
 
 function Home() {
   const buttons = [
@@ -20,17 +21,28 @@ function Home() {
   const selectedCategory = searchParams.get("category") || "all";
   const currentPage = Number(searchParams.get("page")) || 1;
 
+  const search = searchParams.get("search") || "";
+  const [searchInput, setSearchInput] = useState(search);
+  
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["products", selectedCategory, currentPage],
+    queryKey: ["products", selectedCategory, currentPage, search],
 
     queryFn: async () => {
       const response = await axios.get(
-        `http://localhost:8000/api/products?category=${selectedCategory}&page=${currentPage}`,
+        `http://localhost:8000/api/products?search=${search}&category=${selectedCategory}&page=${currentPage}`,
       );
 
       return response.data;
     },
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchParams({ category: selectedCategory, search: searchInput, page: 1 });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput, selectedCategory, setSearchParams]);
 
   if (isLoading) {
     return <h1>Loading...</h1>;
@@ -46,11 +58,20 @@ function Home() {
         <button
           key={button.id}
           className="bg-black text-white py-2 px-4 mx-4 my-2 rounded-lg"
-          onClick={() => setSearchParams({ category: button.id })}
+          onClick={() => setSearchParams({ category: button.id, search: search, page: 1 })}
         >
           {button.name}
         </button>
       ))}
+      <div>
+        <input 
+          type="text"
+          placeholder="Search products..."
+          className="ml-4 border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+        />
+      </div>
       <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {data.products.map((product) => (
           <div key={product._id} className="rounded-xl bg-white p-4 shadow">
@@ -91,6 +112,7 @@ function Home() {
             setSearchParams({
               category: selectedCategory,
               page: page.toString(),
+              search: search
             })
           }
           className={`${currentPage === page ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-lg px-4 py-2`}
