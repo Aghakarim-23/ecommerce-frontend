@@ -2,19 +2,19 @@ import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
-import {useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 
 function Home() {
   const buttons = [
-    { id: "all", name: "All" },
-    { id: "phones", name: "Phones" },
-    { id: "headphones", name: "Headphones" },
-    { id: "electronics", name: "Electronics" },
-    { id: "laptops", name: "Laptops" },
-    { id: "audio", name: "Audio" },
-    { id: "wearables", name: "Wearables" },
-    { id: "tv", name: "TV" },
-    { id: "gaming", name: "Gaming" },
+    { label: "all", name: "All" },
+    { label: "phones", name: "Phones" },
+    { label: "headphones", name: "Headphones" },
+    { label: "electronics", name: "Electronics" },
+    { label: "laptops", name: "Laptops" },
+    { label: "audio", name: "Audio" },
+    { label: "wearables", name: "Wearables" },
+    { label: "tv", name: "TV" },
+    { label: "gaming", name: "Gaming" },
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,7 +23,7 @@ function Home() {
 
   const search = searchParams.get("search") || "";
   const [searchInput, setSearchInput] = useState(search);
-  
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["products", selectedCategory, currentPage, search],
 
@@ -38,11 +38,17 @@ function Home() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setSearchParams({ category: selectedCategory, search: searchInput, page: 1 });
+      console.log("PAGE 1 EDILDI");
+
+      setSearchParams({
+        category: selectedCategory,
+        search: searchInput,
+        page: 1,
+      });
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchInput, selectedCategory, setSearchParams]);
+  }, [searchInput]);
 
   if (isLoading) {
     return <h1>Loading...</h1>;
@@ -56,15 +62,28 @@ function Home() {
     <>
       {buttons.map((button) => (
         <button
-          key={button.id}
+          key={button.label}
           className="bg-black text-white py-2 px-4 mx-4 my-2 rounded-lg"
-          onClick={() => setSearchParams({ category: button.id, search: search, page: 1 })}
+          onClick={
+            button.label !== "all"
+              ? () =>
+                  setSearchParams({
+                    category: button.label,
+                    page: 1,
+                    search: searchInput,
+                  })
+              : () =>
+                  setSearchParams(
+                    { page: 1, search: "", category: "all" },
+                    setSearchInput(""),
+                  )
+          }
         >
           {button.name}
         </button>
       ))}
       <div>
-        <input 
+        <input
           type="text"
           placeholder="Search products..."
           className="ml-4 border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -100,31 +119,28 @@ function Home() {
         ))}
       </div>
       <div className="flex justify-center gap-2 p-4">
-  {Array.from(
-    { length: Math.ceil(data.count / 10) },
-    (_, index) => {
-      const page = index + 1;
+        {Array.from({ length: Math.ceil(data.count / 10) }, (_, index) => {
+          const page = index + 1;
 
-      return (
-        <button
-          key={page}
-          onClick={() =>
-            setSearchParams({
-              category: selectedCategory,
-              page: page.toString(),
-              search: search
-            })
-          }
-          className={`${currentPage === page ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-lg px-4 py-2`}
-        >
-          {page}
-        </button>
-      );
-    }
-  )}
-</div>
+          return (
+            <button
+              key={page}
+              onClick={() =>
+                setSearchParams({
+                  category: selectedCategory,
+                  page: page.toString(),
+                  search: search,
+                })
+              }
+              className={`${currentPage === page ? "bg-black text-white" : "bg-gray-200 text-gray-700"} rounded-lg px-4 py-2`}
+            >
+              {page}
+            </button>
+          );
+        })}
+      </div>
     </>
   );
-}                                                                                                                                                                                                                 
+}
 
 export default Home;
